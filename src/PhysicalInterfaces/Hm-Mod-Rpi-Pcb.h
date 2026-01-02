@@ -44,6 +44,7 @@
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <filesystem>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -51,6 +52,8 @@
 #include <signal.h>
 
 #include <gcrypt.h>
+
+#include <gpiod.hpp>
 
 namespace BidCoS
 {
@@ -154,6 +157,8 @@ class Hm_Mod_Rpi_Pcb  : public IBidCoSInterface
         std::shared_ptr<BaseLib::FileDescriptor> getConnection(std::string& hostname, const std::string& port, std::string& ipAddress);
         virtual void processQueueEntry(int32_t index, int64_t id, std::shared_ptr<BaseLib::ITimedQueueEntry>& entry);
     private:
+        const std::filesystem::path HM_MOD_RPI_PCB_GPIO_CHIP_PATH{"/dev/gpiochip0"};
+        const gpiod::line::offset HM_MOD_RPI_PCB_GPIO_LINE_OFFSET{18};
 };
 
 }

@@ -64,11 +64,6 @@ void Hm_Mod_Rpi_Pcb::setup(int32_t userID, int32_t groupID, bool setPermissions)
   try {
     _out.printDebug("Debug: HM-MOD_RPI_PCB: Setting device permissions");
     if (setPermissions) setDevicePermission(userID, groupID);
-    _out.printDebug("Debug: HM-MOD_RPI_PCB: Exporting GPIO");
-    exportGPIO(1);
-    _out.printDebug("Debug: HM-MOD_RPI_PCB: Setting GPIO permissions");
-    if (setPermissions) setGPIOPermission(1, userID, groupID, false);
-    setGPIODirection(1, BaseLib::Systems::IPhysicalInterface::GPIODirection::Enum::OUT);
   }
   catch (const std::exception &ex) {
     _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
@@ -797,11 +792,21 @@ void Hm_Mod_Rpi_Pcb::doInit() {
 
     // {{{ Reset
     try {
-      openGPIO(1, false);
-      setGPIO(1, false);
+      auto lineRequest = gpiod::chip(HM_MOD_RPI_PCB_GPIO_CHIP_PATH)
+        .prepare_request()
+        .set_consumer("hm-mod-rpi-pcb-reset")
+        .add_line_settings(
+          HM_MOD_RPI_PCB_GPIO_LINE_OFFSET, 
+          gpiod::line_settings()
+            .set_direction(gpiod::line::direction::OUTPUT)
+            .set_output_value(gpiod::line::value::INACTIVE)
+          )
+        .do_request();
+      
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      setGPIO(1, true);
-      closeGPIO(1);
+      
+      lineRequest.set_value(HM_MOD_RPI_PCB_GPIO_LINE_OFFSET,
+        gpiod::line::value::ACTIVE);
     }
     catch (const std::exception &ex) {
       _out.printEx(__FILE__, __LINE__, __PRETTY_FUNCTION__, ex.what());
